@@ -7,7 +7,8 @@ mod systems;
 use bevy::prelude::*;
 use bevy_panorbit_camera::PanOrbitCameraPlugin;
 use setup::setup_solar_system;
-use systems::{physics_system, input_system, update_ui_with_settings};
+use systems::{physics_system, input_system, update_ui_with_settings, auto_screenshot_system};
+use components::ScreenshotTracker;
 
 fn main() {
     App::new()
@@ -21,8 +22,9 @@ fn main() {
             ..default()
         }))
         .add_plugins(PanOrbitCameraPlugin)
+        .insert_resource(ScreenshotTracker { captured: vec![false; 8] })
         .add_systems(Startup, (setup_solar_system, setup_ui))
-        .add_systems(Update, (physics_system, input_system, update_ui_with_settings))
+        .add_systems(Update, (physics_system, input_system, update_ui_with_settings, auto_screenshot_system))
         .run();
 }
 

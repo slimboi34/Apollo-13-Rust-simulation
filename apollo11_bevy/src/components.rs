@@ -44,6 +44,12 @@ pub fn get_total_distance(distances: &[f32]) -> f32 {
     *distances.last().unwrap_or(&0.0)
 }
 
+/// Tracks which mission moments have been screenshot-captured
+#[derive(Resource)]
+pub struct ScreenshotTracker {
+    pub captured: Vec<bool>,
+}
+
 // UI Tag Components
 #[derive(Component)] pub struct PhaseText;
 #[derive(Component)] pub struct TimeText;

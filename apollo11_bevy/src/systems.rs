@@ -1,4 +1,6 @@
 use bevy::prelude::*;
+use bevy::render::view::screenshot::ScreenshotManager;
+use bevy::window::PrimaryWindow;
 use bevy_panorbit_camera::PanOrbitCamera;
 use crate::constants::*;
 use crate::components::*;
@@ -367,7 +369,55 @@ pub fn update_ui_with_settings(
         if let Ok(mut text) = q_ctrl.get_single_mut() {
             let pause_str = if settings.paused { "PAUSED" } else { "LIVE" };
             let track_str = if settings.tracking { "ON" } else { "OFF" };
-            text.sections[0].value = format!("SPACE: Play/Pause [{}] | T: Track [{}] | R: Reset | ARROWS: Speed [{:.2}X]", pause_str, track_str, settings.speed);
+            text.sections[0].value = format!("SPACE: Play/Pause [{}] | T: Track [{}] | R: Reset | P: Screenshot | ARROWS: Speed [{:.2}X]", pause_str, track_str, settings.speed);
         }
+    }
+}
+
+/// Automatically captures screenshots at key mission moments for portfolio use.
+/// Also supports manual capture with the P key.
+pub fn auto_screenshot_system(
+    settings: Res<SimSettings>,
+    mut tracker: ResMut<ScreenshotTracker>,
+    main_window: Query<Entity, With<PrimaryWindow>>,
+    mut screenshot_manager: ResMut<ScreenshotManager>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+) {
+    // Portfolio-perfect mission moments
+    let moments: [(f32, &str); 8] = [
+        (0.01, "01_ksc_launch"),          // On the launchpad, Earth filling view
+        (0.05, "02_tli_burn"),            // Engine glow during TLI
+        (0.15, "03_translunar_coast"),    // Earth receding, deep space ahead
+        (0.35, "04_lunar_approach"),      // Moon growing large ahead
+        (0.45, "05_lunar_orbit"),         // Orbiting the Moon
+        (0.52, "06_lm_undocking"),        // LM just separated from CSM
+        (0.70, "07_tei_homeward"),        // TEI burn, heading home
+        (0.95, "08_reentry_splashdown"),  // Approaching Earth for splashdown
+    ];
+
+    let t = settings.mission_time;
+    let Ok(window) = main_window.get_single() else { return };
+
+    // Auto-capture at mission moments
+    for (i, (trigger_t, name)) in moments.iter().enumerate() {
+        if i < tracker.captured.len() && !tracker.captured[i] {
+            // Trigger within a small window around the target time
+            if (t - trigger_t).abs() < 0.005 && !settings.paused {
+                tracker.captured[i] = true;
+                let path = format!("screenshots/{}.png", name);
+                std::fs::create_dir_all("screenshots").ok();
+                screenshot_manager.save_screenshot_to_disk(window, path.clone()).unwrap();
+                info!("📸 Portfolio screenshot saved: {}", path);
+            }
+        }
+    }
+
+    // Manual screenshot with P key
+    if keyboard_input.just_pressed(KeyCode::KeyP) {
+        let timestamp = (t * 1000.0) as i32;
+        let path = format!("screenshots/manual_t{:04}.png", timestamp);
+        std::fs::create_dir_all("screenshots").ok();
+        screenshot_manager.save_screenshot_to_disk(window, path.clone()).unwrap();
+        info!("📸 Manual screenshot saved: {}", path);
     }
 }
