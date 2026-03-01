@@ -40,7 +40,7 @@ pub struct OrbitPaths {
     pub lm_distances: Vec<f32>,
 }
 
-pub fn get_total_distance(distances: &Vec<f32>) -> f32 {
+pub fn get_total_distance(distances: &[f32]) -> f32 {
     *distances.last().unwrap_or(&0.0)
 }
 
