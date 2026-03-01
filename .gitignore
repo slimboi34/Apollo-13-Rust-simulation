@@ -1,0 +1,22 @@
+# Rust build artifacts
+target/
+debug/
+
+# Large textures (download separately — see README)
+*.png
+*_8k.*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+*.log
